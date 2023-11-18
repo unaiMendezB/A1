@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 # Neural Network class
 class MyNeuralNetwork:
@@ -40,15 +41,10 @@ class MyNeuralNetwork:
 
     for lay in range(1, self.L):
       self.w.append(np.zeros((layers[lay], layers[lay - 1])))
-
       self.theta.append(np.zeros(layers[lay]))
-
       self.delta.append(np.zeros(layers[lay]))
-
       self.d_w.append(np.zeros((layers[lay], layers[lay - 1])))
-
       self.d_theta.append(np.zeros(layers[lay]))
-
       self.d_w_prev.append(np.zeros((layers[lay], layers[lay - 1])))
 
       self.d_theta_prev.append(np.zeros(layers[lay]))
@@ -72,12 +68,42 @@ class MyNeuralNetwork:
 
     return
 
+'''
+1 Scale input and/or output patterns, if needed
+2 Initialize all weights and thresholds randomly
+3 For epoch = 1 To num epochs
+4   For pat = 1 To num training patterns
+5     Choose a random pattern (x, z) of the training set
+6     Feed􀀀forward propagation of pattern x to obtain the output o(x)
+7     Back􀀀propagate the error for this pattern
+8     Update the weights and thresholds
+9   End For
+10  Feed􀀀forward all training patterns and calculate their prediction quadratic error
+11  Feed􀀀forward all validation patterns and calculate their prediction quadratic error
+12 End For
+13 # Optional: Plot the evolution of the training and validation errors
+14 Feed􀀀forward all test patterns
+15 Descale the predictions of test patterns, and evaluate them
+'''
 
+# 1 Scale input and/or output patterns, if needed
+dataSynth = pd.read_csv('synthetic_Normalized.txt', sep='\t')
+dataTurb = pd.read_csv('turbine_Standardized.txt', sep='\t')
 
-
+# 2 Initialize all weights and thresholds randomly
 # layers include input layer + hidden layers + output layer
 layers = [4, 9, 5, 1]
 nn = MyNeuralNetwork(layers)
+
+
+
+
+
+
+
+
+
+
 
 print("L = ", nn.L, end="\n")
 print("n = ", nn.n, end="\n")
