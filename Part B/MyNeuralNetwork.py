@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import random
 
 # Neural Network class
 class MyNeuralNetwork:
@@ -46,15 +47,15 @@ class MyNeuralNetwork:
       self.d_w.append(np.zeros((layers[lay], layers[lay - 1])))
       self.d_theta.append(np.zeros(layers[lay]))
       self.d_w_prev.append(np.zeros((layers[lay], layers[lay - 1])))
-
       self.d_theta_prev.append(np.zeros(layers[lay]))
 
   # This method allows us to train the network with this data.
   # X an array of size (n_samples,n_features) which holds the training samples represented as floating point feature vectors
   # y of size (n_samples), which holds the target values (class labels) for the training samples.
   def fit(self, X, y):
-
-    return
+    for epoch in range(self.epochs):
+      n=''#borrar e implementar amb code
+    return ''
 
   # X an array of size (n_samples,n_features) that contains the samples.
   # This method returns a vector with the predicted values for all the input samples
@@ -86,22 +87,29 @@ class MyNeuralNetwork:
 15 Descale the predictions of test patterns, and evaluate them
 '''
 
-# 1 Scale input and/or output patterns, if needed
 dataSynth = pd.read_csv('synthetic_Normalized.txt', sep='\t')
+dataSynthTEST = pd.read_csv('synthetic_Normalized_TEST.txt', sep='\t')
+
+X_s = dataSynth[:, :-1]  # All except last column
+y_s = dataSynth[:, -1]  # last column
+X_s_TEST = dataSynthTEST[:, :-1]  # All except last column
+y_s_TEST = dataSynthTEST[:, -1]  # last column
+
 dataTurb = pd.read_csv('turbine_Standardized.txt', sep='\t')
+dataTurbTEST = pd.read_csv('turbine_Standardized_TEST.txt', sep='\t')
 
-# 2 Initialize all weights and thresholds randomly
-# layers include input layer + hidden layers + output layer
-layers = [4, 9, 5, 1]
-nn = MyNeuralNetwork(layers)
+X_t = dataTurb[:, :-1]  # All except last column
+y_t = dataTurb[:, -1]  # last column
+X_t_TEST = dataTurbTEST[:, :-1]  # All except last column
+y_t_TEST = dataTurbTEST[:, -1]  # last column
 
+layers = [4, 9, 5, 1]   # layers include input layer + hidden layers + output layer
 
+nn = MyNeuralNetwork(layers, 1000, 0.01, '', '', '')    # Creation nn
 
+nn.fit(X_s, y_s)  # Training
 
-
-
-
-
+prediction = nn.predict(X_s_TEST)  # Making prediction
 
 
 
