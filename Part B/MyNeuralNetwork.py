@@ -16,6 +16,8 @@ class MyNeuralNetwork:
 
         self.xi = []  # Node values
 
+        self.z = []
+
         self.w = []  # Weights for each layer
         self.w.append(np.zeros((1, 1)))
 
@@ -54,22 +56,39 @@ class MyNeuralNetwork:
     # y of size (n_samples), which holds the target values (class labels) for the training samples.
     def fit(self, X, y):
 
-        for epoch in range(self.epochs):
-            for pat in range(X.shape[0]):
-                # Choose a random pattern
+        for epoch in range(self.epochs):    #  (3)
+            for pat in range(X.shape[0]):   #  (4)
+                # Choose a random pattern (5)
                 x = X[pat]
                 z = y[pat]
 
-                # Feed-forward propagation
+                # Feed-forward propagation (6)
                 self.xi[0] = x
                 for lay in range(1, self.L):
                     self.z[lay] = np.dot(self.w[lay], self.xi[lay - 1]) + self.theta[lay]
                     self.xi[lay] = activate(self.fact, self.z[lay])
 
-                # Back-propagate the error
+                # Back-propagate the error (7)
                 self.delta[-1] = (self.xi[-1] - z) * activate_derivative(self.fact, self.xi[-1])
                 for lay in range(self.L - 2, 0, -1):
                     self.delta[lay] = np.dot(self.w[lay + 1].T, self.delta[lay + 1]) * activate_derivative(self.fact,
+                                                                                                           self.xi[lay])
+
+                # Update the weights and thresholds (8)
+                for lay in range(1, self.L):
+                    self.d_w[lay] = np.dot(self.delta[lay], self.xi[lay - 1].T)
+                    self.d_theta[lay] = self.delta[lay]
+                    self.w[lay] -= self.learning_rate * self.d_w[lay] + self.momentum * self.d_w_prev[lay]
+                    self.theta[lay] -= self.learning_rate * self.d_theta[lay] + self.momentum * self.d_theta_prev[lay]
+
+                    self.d_w_prev[lay] = self.d_w[lay]
+                    self.d_theta_prev[lay] = self.d_theta[lay]
+
+            # TODO: Feed-forward all training patterns and calculate their prediction quadratic error
+
+            # TODO: Feed-forward all validation patterns and calculate their prediction quadratic error
+
+        # TODO: Feed-forward all test patterns
 
         return ''
 
@@ -167,7 +186,7 @@ y_t_TEST = dataTurbTEST[:, -1]  # last column
 
 layers = [4, 9, 5, 1]  # layers include input layer + hidden layers + output layer
 
-nn = MyNeuralNetwork(layers, 1000, 0.01, '', 'sigmoid', '')  # Creation nn
+nn = MyNeuralNetwork(layers, 1000, 0.01, 0.0, 'sigmoid', '')  # Creation nn
 
 nn.fit(X_s, y_s)  # Training
 
