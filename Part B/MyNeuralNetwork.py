@@ -53,6 +53,24 @@ class MyNeuralNetwork:
     # X an array of size (n_samples,n_features) which holds the training samples represented as floating point feature vectors
     # y of size (n_samples), which holds the target values (class labels) for the training samples.
     def fit(self, X, y):
+
+        for epoch in range(self.epochs):
+            for pat in range(X.shape[0]):
+                # Choose a random pattern
+                x = X[pat]
+                z = y[pat]
+
+                # Feed-forward propagation
+                self.xi[0] = x
+                for lay in range(1, self.L):
+                    self.z[lay] = np.dot(self.w[lay], self.xi[lay - 1]) + self.theta[lay]
+                    self.xi[lay] = activate(self.fact, self.z[lay])
+
+                # Back-propagate the error
+                self.delta[-1] = (self.xi[-1] - z) * activate_derivative(self.fact, self.xi[-1])
+                for lay in range(self.L - 2, 0, -1):
+                    self.delta[lay] = np.dot(self.w[lay + 1].T, self.delta[lay + 1]) * activate_derivative(self.fact,
+
         return ''
 
     # X an array of size (n_samples,n_features) that contains the samples.
