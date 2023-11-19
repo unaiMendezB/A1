@@ -39,6 +39,9 @@ class MyNeuralNetwork:
         self.d_theta_prev = []  # Previous threshold changes for momentum calculation
         self.d_theta_prev.append(np.zeros((1, 1)))
 
+        self.train_errors = []  # Training errors for each epoch
+        self.val_errors = []  # Validation errors for each epoch
+
         for lay in range(self.L):
             self.xi.append(np.zeros(layers[lay]))
 
@@ -55,7 +58,7 @@ class MyNeuralNetwork:
     # X an array of size (n_samples,n_features) which holds the training samples represented as floating point feature vectors
     # y of size (n_samples), which holds the target values (class labels) for the training samples.
     def fit(self, X, y):
-
+        X_train, X_val, y_train, y_val = self.split_dataset(X, y, self.validation_set_percentage)
         for epoch in range(self.epochs):    #  (3)
             for pat in range(X.shape[0]):   #  (4)
                 # Choose a random pattern (5)
@@ -85,24 +88,56 @@ class MyNeuralNetwork:
                     self.d_theta_prev[lay] = self.d_theta[lay]
 
             # TODO: Feed-forward all training patterns and calculate their prediction quadratic error
+            # Feed-forward all training patterns and calculate their prediction quadratic error (10)
+            train_predictions = self.predict(X_train)
+            train_error = np.mean((y_train - train_predictions) ** 2)
+            self.train_errors.append(train_error)
 
-            # TODO: Feed-forward all validation patterns and calculate their prediction quadratic error
+            # Feed-forward all validation patterns and calculate their prediction quadratic error (11)
+            val_predictions = self.predict(X_val)
+            val_error = np.mean((y_val - val_predictions) ** 2)
+            self.val_errors.append(val_error)
 
         # TODO: Feed-forward all test patterns
-
-        return ''
 
     # X an array of size (n_samples,n_features) that contains the samples.
     # This method returns a vector with the predicted values for all the input samples
     def predict(self, X):
 
-        return
+        predictions = []
+        for pat in range(X.shape[0]):
+            x = X[pat]
+
+            # Feed-forward propagation
+            self.xi[0] = x
+            for lay in range(1, self.L):
+                self.z[lay] = np.dot(self.w[lay], self.xi[lay - 1]) + self.theta[lay]
+                self.xi[lay] = activate(self.fact, self.z[lay])
+
+            # The output of the network is the output of the last layer
+            predictions.append(self.xi[-1])
+
+        return np.array(predictions)
 
     # that returns 2 arrays of size (n_epochs, 2) that contain the evolution of the training error and the validation
     # error for each of the epochs of the system, so this information can be plotted.
     def loss_epochs(self):
+        return np.array(self.train_errors), np.array(self.val_errors)
 
-        return
+    # Separates the data to train from the one to Test
+    def split_dataset(X, y, test_size):
+        num_test = int(test_size * len(y))
+
+        # Shuffle the data (for turb or synt we dont need this but it can be helpfull for other datasets)
+        indices = np.random.permutation(len(y))
+
+        # Split the data
+        X_train = X[indices[num_test:]]
+        y_train = y[indices[num_test:]]
+        X_test = X[indices[:num_test]]
+        y_test = y[indices[:num_test]]
+
+        return X_train, X_test, y_train, y_test
 
 
 def sigmoid_derivative(x):
@@ -168,29 +203,21 @@ def activate_derivative(activation_function, x):
 15 Descale the predictions of test patterns, and evaluate them
 '''
 
-dataSynth = pd.read_csv('synthetic_Normalized.txt', sep='\t')
-dataSynthTEST = pd.read_csv('synthetic_Normalized_TEST.txt', sep='\t')
-
-X_s = dataSynth[:, :-1]  # All except last column
-y_s = dataSynth[:, -1]  # last column
-X_s_TEST = dataSynthTEST[:, :-1]  # All except last column
-y_s_TEST = dataSynthTEST[:, -1]  # last column
-
+'''
 dataTurb = pd.read_csv('turbine_Standardized.txt', sep='\t')
-dataTurbTEST = pd.read_csv('turbine_Standardized_TEST.txt', sep='\t')
+'''
+dataSynth = pd.read_csv('synthetic_Normalized.txt', sep='\t')
+X = dataSynth.iloc[:, :-1].values  # Create the array X
+y = dataSynth.iloc[:, -1].values # Create the vector y
 
-X_t = dataTurb[:, :-1]  # All except last column
-y_t = dataTurb[:, -1]  # last column
-X_t_TEST = dataTurbTEST[:, :-1]  # All except last column
-y_t_TEST = dataTurbTEST[:, -1]  # last column
 
 layers = [4, 9, 5, 1]  # layers include input layer + hidden layers + output layer
 
-nn = MyNeuralNetwork(layers, 1000, 0.01, 0.0, 'sigmoid', '')  # Creation nn
+nn = MyNeuralNetwork(layers, 1000, 0.01, 0.0, 'sigmoid', 0.2)  # Creation nn
 
-nn.fit(X_s, y_s)  # Training
-
+nn.fit(X, y)  # Training
 prediction = nn.predict(X_s_TEST)  # Making prediction
+train_errors, val_errors = nn.loss_epochs()
 
 print("L = ", nn.L, end="\n")
 print("n = ", nn.n, end="\n")
