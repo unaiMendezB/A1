@@ -1,27 +1,85 @@
 import numpy as np
 import pandas as pd
 
+
 # Neural Network class
 class MyNeuralNetwork:
     def __init__(self, layers, epochs, lr, momentum, activation, validation_set_percentage):
 
+        # Number of layers
         self.L = len(layers)
-        self.n = layers
-        self.epochs = epochs
-        self.learning_rate = lr
-        self.momentum = momentum
-        self.validation_set_percentage = validation_set_percentage
-        self.fact = activation
-        self.w = [np.random.randn(self.n[i], self.n[i-1]) for i in range(1, self.L)]
-        self.theta = [np.random.randn(ni, 1) for ni in self.n[1:]]
-        self.d_w_prev = [np.zeros((self.n[i], self.n[i-1])) for i in range(1, self.L)]
-        self.d_theta_prev = [np.zeros((ni, 1)) for ni in self.n[1:]]
-        self.loss_train = []
-        self.loss_val = []
 
-        self.xi = []  # node values
+        # Number of neurons in each layer
+        self.n = layers
+
+        # Field values
+        self.h = []
+        for lay in range(self.L):
+            self.h.append(np.zeros(layers[lay]))
+
+        # Node values
+        self.xi = []
         for lay in range(self.L):
             self.xi.append(np.zeros(layers[lay]))
+
+        # edge weights
+        self.w = []
+        self.w.append(np.zeros((1, 1)))
+        for lay in range(1, self.L):
+            self.w.append(np.zeros((layers[lay], layers[lay - 1])))
+
+        # Threshold values
+        self.theta = []
+        for lay in range(self.L):
+            self.theta.append(np.zeros(layers[lay]))
+
+        # Propagation of errors
+        self.delta = []
+        for lay in range(self.L):
+            self.delta.append(np.zeros(layers[lay]))
+
+        # Array of matrices for the changes of the weights
+        self.d_w = []
+        self.d_w.append(np.zeros((1, 1)))
+        for lay in range(1, self.L):
+            self.d_w.append(np.zeros((layers[lay], layers[lay - 1])))
+
+        # Array of arrays for the changes of the weights
+        self.d_theta = []
+        for lay in range(self.L):
+            self.d_theta.append(np.zeros(layers[lay]))
+
+        # Previous changes of the weights, used for the momentum term
+        self.d_w_prev = []
+        self.d_w_prev.append(np.zeros((1, 1)))
+        for lay in range(1, self.L):
+            self.d_w_prev.append(np.zeros((layers[lay], layers[lay - 1])))
+
+        # Previous changes of the thresholds, used for the momentum term
+        self.d_theta_prev = []
+        for lay in range(self.L):
+            self.d_theta_prev.append(np.zeros(layers[lay]))
+
+        # Activation function
+        self.fact = activation
+
+        # The number of epochs for the training process
+        self.epochs = epochs
+
+        # The learning rate for the training process
+        self.learning_rate = lr
+
+        # The momentum term for the training process
+        self.momentum = momentum
+
+        # The percentage of the dataset to be used as a validation set
+        self.validation_set_percentage = validation_set_percentage
+
+        # A list to store the loss for the training set after each epoch
+        self.loss_train = []
+
+        # A list to store the loss for the validation set after each epoch
+        self.loss_val = []
 
     # Separates the data to train from the one to Test
     def split_dataset(self, X, y):
@@ -60,7 +118,6 @@ class MyNeuralNetwork:
         elif self.fact == 'tanh':
             return 1 - np.tanh(x) ** 2
 
-
     def forward_propagation(self, x):
         self.h = [x]
         self.xi = []
@@ -76,7 +133,8 @@ class MyNeuralNetwork:
         self.delta = self.delta[::-1]
 
     def update_weights(self):
-        self.d_w = [self.lr * np.dot(self.delta[l], self.h[l].T) + self.momentum * self.d_w_prev[l] for l in range(self.L - 1)]
+        self.d_w = [self.lr * np.dot(self.delta[l], self.h[l].T) + self.momentum * self.d_w_prev[l] for l in
+                    range(self.L - 1)]
         self.d_theta = [self.lr * dl + self.momentum * dt for dl, dt in zip(self.delta[1:], self.d_theta_prev)]
         self.w = [wl - dwl for wl, dwl in zip(self.w, self.d_w)]
         self.theta = [tl - dtl for tl, dtl in zip(self.theta, self.d_theta)]
@@ -85,7 +143,6 @@ class MyNeuralNetwork:
 
     def loss(self, y_true, y_pred):
         return np.mean((y_true - y_pred) ** 2)
-
 
     # This method allows us to train the network with this data.
     # X array of size (n_samples,n_features) which holds the training samples represented
@@ -116,7 +173,7 @@ y = dataSynth.iloc[:, -1].values  # Create the vector y
 
 layers = [4, 9, 5, 1]  # layers include input layer + hidden layers + output layer
 
-nn = MyNeuralNetwork(layers, 100, 0.01, 0.9, 'sigmoid', 0.2,)  # Creation nn
+nn = MyNeuralNetwork(layers, 100, 0.01, 0.9, 'sigmoid', 0.2, )  # Creation nn
 nn.fit(X, y)  # Training
 train_errors, val_errors = nn.loss_epochs()
 
