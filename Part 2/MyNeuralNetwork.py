@@ -150,20 +150,55 @@ class MyNeuralNetwork:
     # y of size (n_samples), which holds the target values (class labels) for the training samples.
     def fit(self, X, y):
         X_train, X_val, y_train, y_val = self.split_dataset(X, y)
-        for _ in range(self.epochs):
-            idx = np.random.permutation(X_train.shape[0])
-            for i in idx:
-                self.forward_propagation(X_train[i])
-                self.backward_propagation(y_train[i])
-                self.update_weights()
-            self.loss_train.append(self.loss(y_train, self.predict(X_train)))
-            self.loss_val.append(self.loss(y_val, self.predict(X_val)))
 
-    def predict(self, X):
-        return np.array([self.forward_propagation(x) for x in X])
+        # 2. Initialize all weights and thresholds randomly
+        for lay in range(1, self.L):
+            self.w[lay] = np.random.randn(self.n[lay], self.n[lay - 1])
+            self.theta[lay] = np.random.randn(self.n[lay])
 
-    def loss_epochs(self):
-        return np.array([self.loss_train, self.loss_val]).T
+        # 3. For epoch = 1 To num epochs
+        for epoch in range(self.epochs):
+            # 4. For pat = 1 To num training patterns
+            for pat in range(X_train.shape[0]):
+                # 5. Choose a random pattern (x, z) of the training set
+                idx = np.random.randint(0, X_train.shape[0])
+                x = X_train[idx]
+                z = y_train[idx]
+
+                # 6. Feed-forward propagation of pattern x to obtain the output o(x)
+                self.feed_forward(x)
+
+                # 7. Back-propagate the error for this pattern
+                self.back_propagate(z)
+
+                # 8. Update the weights and thresholds
+                self.update_weights_and_thresholds()
+
+            # 10. Feed-forward all training patterns and calculate their prediction quadratic error
+            self.loss_train.append(self.calculate_loss(X_train, y_train))
+
+            # 11. Feed-forward all validation patterns and calculate their prediction quadratic error
+            self.loss_val.append(self.calculate_loss(X_val, y_val))
+
+        # 13. Plot the evolution of the training and validation errors
+        self.plot_errors()
+
+    for _ in range(self.epochs):
+        idx = np.random.permutation(X_train.shape[0])
+        for i in idx:
+            self.forward_propagation(X_train[i])
+            self.backward_propagation(y_train[i])
+            self.update_weights()
+        self.loss_train.append(self.loss(y_train, self.predict(X_train)))
+        self.loss_val.append(self.loss(y_val, self.predict(X_val)))
+
+
+def predict(self, X):
+    return np.array([self.forward_propagation(x) for x in X])
+
+
+def loss_epochs(self):
+    return np.array([self.loss_train, self.loss_val]).T
 
 
 # dataTurb = pd.read_csv('turbine_Standardized.txt', sep='\t')
