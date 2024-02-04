@@ -5,11 +5,11 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 
 # Load data from the text file
-df = pd.read_csv('wine-data.txt', sep='\t')
+df = pd.read_csv('turbine_Standardized.txt', sep='\t')
 
 # Split the data into features and target
-y = df.iloc[:, -1]
-X = df.iloc[:, :-1]
+X = df.drop('power_of_hydroelectrical_turbine', axis=1)
+y = df['power_of_hydroelectrical_turbine']
 
 # Split the data into training and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
