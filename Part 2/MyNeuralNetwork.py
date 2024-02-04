@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 # Neural Network class
@@ -118,38 +119,9 @@ class MyNeuralNetwork:
         elif self.fact == 'tanh':
             return 1 - np.tanh(x) ** 2
 
-    def forward_propagation(self, x):
-        self.h = [x]
-        self.xi = []
-        for l in range(self.L - 1):
-            self.xi.append(np.dot(self.w[l], self.h[-1]) + self.theta[l])
-            self.h.append(self.activate(self.xi[-1]))
-        return self.h[-1]
-
-    def backward_propagation(self, y):
-        self.delta = [self.h[-1] - y]
-        for l in range(self.L - 2, -1, -1):
-            self.delta.append(np.dot(self.w[l].T, self.delta[-1]) * self.activate_derivative(self.xi[l]))
-        self.delta = self.delta[::-1]
-
-    def update_weights(self):
-        self.d_w = [self.lr * np.dot(self.delta[l], self.h[l].T) + self.momentum * self.d_w_prev[l] for l in
-                    range(self.L - 1)]
-        self.d_theta = [self.lr * dl + self.momentum * dt for dl, dt in zip(self.delta[1:], self.d_theta_prev)]
-        self.w = [wl - dwl for wl, dwl in zip(self.w, self.d_w)]
-        self.theta = [tl - dtl for tl, dtl in zip(self.theta, self.d_theta)]
-        self.d_w_prev = self.d_w
-        self.d_theta_prev = self.d_theta
-
-    def loss(self, y_true, y_pred):
-        return np.mean((y_true - y_pred) ** 2)
-
-    # This method allows us to train the network with this data.
-    # X array of size (n_samples,n_features) which holds the training samples represented
-    # as floating point feature vectors
-    # y of size (n_samples), which holds the target values (class labels) for the training samples.
     def fit(self, X, y):
-        X_train, X_val, y_train, y_val = self.split_dataset(X, y)
+        # 1. Scale input and/or output patterns, if needed
+        X_train, X_test, y_train, y_test = self.split_dataset(X, y)
 
         # 2. Initialize all weights and thresholds randomly
         for lay in range(1, self.L):
@@ -166,7 +138,7 @@ class MyNeuralNetwork:
                 z = y_train[idx]
 
                 # 6. Feed-forward propagation of pattern x to obtain the output o(x)
-                self.feed_forward(x)
+                self.forward_propagation(x)
 
                 # 7. Back-propagate the error for this pattern
                 self.back_propagate(z)
@@ -175,30 +147,63 @@ class MyNeuralNetwork:
                 self.update_weights_and_thresholds()
 
             # 10. Feed-forward all training patterns and calculate their prediction quadratic error
-            self.loss_train.append(self.calculate_loss(X_train, y_train))
+            self.loss_train.append(self.loss(X_train, y_train))
 
             # 11. Feed-forward all validation patterns and calculate their prediction quadratic error
-            self.loss_val.append(self.calculate_loss(X_val, y_val))
+            self.loss_val.append(self.loss(X_test, y_test))
 
         # 13. Plot the evolution of the training and validation errors
         self.plot_errors()
 
-    for _ in range(self.epochs):
-        idx = np.random.permutation(X_train.shape[0])
-        for i in idx:
-            self.forward_propagation(X_train[i])
-            self.backward_propagation(y_train[i])
-            self.update_weights()
-        self.loss_train.append(self.loss(y_train, self.predict(X_train)))
-        self.loss_val.append(self.loss(y_val, self.predict(X_val)))
+    def forward_propagation(self, x):
+        self.xi[0] = x
+        for lay in range(1, self.L):
+            self.h[lay] = np.dot(self.w[lay], self.xi[lay - 1]) - self.theta[lay]
+            self.xi[lay] = self.activate(self.h[lay])
 
+    def back_propagate(self, z):
+        self.delta[-1] = (z - self.xi[-1]) * self.activate_derivative(self.h[-1])
+        for lay in range(self.L - 2, -1, -1):  # For the hidden layers
+            self.delta[lay] = self.activate_derivative(self.h[lay]) * np.dot(self.w[lay + 1].T, self.delta[lay + 1])
 
-def predict(self, X):
-    return np.array([self.forward_propagation(x) for x in X])
+    def update_weights_and_thresholds(self):
+        for lay in range(1, self.L):
+            self.d_w[lay] = self.learning_rate * np.outer(self.delta[lay], self.xi[lay - 1]) + self.momentum * \
+                            self.d_w_prev[lay]
+            self.d_theta[lay] = -self.learning_rate * self.delta[lay] + self.momentum * self.d_theta_prev[lay]
+            self.w[lay] += self.d_w[lay]
+            self.theta[lay] += self.d_theta[lay]
+            self.d_w_prev[lay] = self.d_w[lay]
+            self.d_theta_prev[lay] = self.d_theta[lay]
 
+    def loss(self, X, y):
+        loss = 0
+        for i in range(X.shape[0]):
+            self.forward_propagation(X[i])
+            loss += np.sum((y[i] - self.xi[-1]) ** 2)  # Quadratic error
+        return loss / X.shape[0]  # Mean quadratic error
 
-def loss_epochs(self):
-    return np.array([self.loss_train, self.loss_val]).T
+    def plot_errors(self):
+        plt.plot(range(self.epochs), self.loss_train, label='Training loss')
+        plt.plot(range(self.epochs), self.loss_val, label='Validation loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.show()
+
+    def predict(self, X):
+        predictions = []
+        for i in range(X.shape[0]):
+            self.forward_propagation(X[i])
+            predictions.append(self.xi[-1])  # The output of the network is the prediction
+        return np.array(predictions)
+
+    def loss_epochs(self):
+        # Combine the training and validation losses into a single array
+        loss_epochs = np.zeros((self.epochs, 2))
+        loss_epochs[:, 0] = self.loss_train
+        loss_epochs[:, 1] = self.loss_val
+        return loss_epochs
 
 
 # dataTurb = pd.read_csv('turbine_Standardized.txt', sep='\t')
@@ -211,13 +216,3 @@ layers = [4, 9, 5, 1]  # layers include input layer + hidden layers + output lay
 nn = MyNeuralNetwork(layers, 100, 0.01, 0.9, 'sigmoid', 0.2, )  # Creation nn
 nn.fit(X, y)  # Training
 train_errors, val_errors = nn.loss_epochs()
-
-print("L = ", nn.L, end="\n")
-print("n = ", nn.n, end="\n")
-
-print("xi = ", nn.xi, end="\n")
-print("xi[0] = ", nn.xi[0], end="\n")
-print("xi[1] = ", nn.xi[0], end="\n")
-
-print("wh = ", nn.w, end="\n")
-print("wh[1] = ", nn.w[1], end="\n")
